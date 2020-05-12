@@ -54,7 +54,8 @@ int mouseClicked = 0;
 
 GLfloat etX = 0.0, etY = 0.0, etZ = -1.0;
 
-float Rotate = 0.0, Rad, deltaX, deltaRotate;
+float RotateX = 0.0, Rad, deltaX, deltaXRotate;
+float RotateY = 0.0, deltaY, deltaYRotate;
 
 void MyDisplay() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -67,7 +68,7 @@ void MyDisplay() {
 	// 6,7,8 : 카메라 상향 벡터
 	gluLookAt(
 		0.0, 0.0, 0.0,
-		etX, 1.0, etZ,
+		etX, etY, etZ,
 		0.0, 1.0, 0.0
 	);
 	// 마우스의 움직에 따라 시점을 변화시키려면
@@ -139,13 +140,17 @@ void MyMouseClick(GLint Button, GLint State, GLint x, GLint y) {
 void MyMouseMove(GLint x, GLint y) {
 	ViewX = x;
 	ViewY = y;
+	
 	deltaX = (float)(ViewX - clickedX);
-	deltaRotate = deltaX / 500.0;
-	Rotate = deltaRotate * 180.0;
-	Rad = getRadian(Rotate);
+	deltaXRotate = deltaX / 500.0;
+	RotateX = deltaXRotate * 180.0;
+	Rad = getRadian(RotateX);
 	etX = (GLfloat) (sin(Rad));
 	etZ = (GLfloat) (-1 * cos(Rad));
 	
+	deltaY = (float)(clickedY - ViewY);
+	deltaYRotate = deltaY / 500.0;
+	etY = deltaYRotate * 2;
 	glutPostRedisplay();
 }
 
