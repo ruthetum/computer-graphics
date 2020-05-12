@@ -7,6 +7,12 @@
 // 추가 
 
 #include <GL/glut.h>
+#include <math.h>
+#define PI 3.14159265358972
+
+float getRadian(float num) {
+	return num * (PI / 180);
+}
 
 // 조명 설정 
 void InitLight() {
@@ -37,10 +43,18 @@ void InitLight() {
 }
 
 // 마우스 움직임에 따른 시점 변경용 전역변수 
-int ViewX = 0, ViewY = 0;
+GLint clickedX, clickedY;
+GLint ViewX = 0, ViewY = 0;
 
 // flatshade와 wireframe 토글링을 위한 전역변수
 int FlatShaded = 0, WireFramed = 0; 
+
+// 마우스 클릭 확인용
+int mouseClicked = 0; 
+
+GLfloat etX = 0.0, etY = 0.0, etZ = -1.0;
+
+float Rotate = 0.0, Rad, deltaX, deltaRotate;
 
 void MyDisplay() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -50,10 +64,10 @@ void MyDisplay() {
 	
 	// 0,1,2 : 바라보는 눈의 위치
 	// 3,4,5 : 바라볼 위치
-	// 6,7,8 : 카메라 상향 벡터 
+	// 6,7,8 : 카메라 상향 벡터
 	gluLookAt(
 		0.0, 0.0, 0.0,
-		0.0, 0.0, 0.1,
+		etX, 1.0, etZ,
 		0.0, 1.0, 0.0
 	);
 	// 마우스의 움직에 따라 시점을 변화시키려면
@@ -110,11 +124,29 @@ void MyKeyboard(unsigned char KeyPressed, int x, int y) {
 	}
 }
 
+void MyMouseClick(GLint Button, GLint State, GLint x, GLint y) {
+	if (Button == GLUT_LEFT_BUTTON && State == GLUT_DOWN) {
+		ViewX = x;
+		ViewY = y;
+		clickedX = x;
+		clickedY = y;
+	}
+	if (Button == GLUT_LEFT_BUTTON && State == GLUT_DOWN) {
+		glutPostRedisplay();
+	}
+}
+
 void MyMouseMove(GLint x, GLint y) {
+	ViewX = x;
+	ViewY = y;
+	deltaX = (float)(ViewX - clickedX);
+	deltaRotate = deltaX / 500.0;
+	Rotate = deltaRotate * 180.0;
+	Rad = getRadian(Rotate);
+	etX = (GLfloat) (sin(Rad));
+	etZ = (GLfloat) (-1 * cos(Rad));
 	
-	// 마우스 움직임 X, Y를 전역변수인 ViewX, ViewY에 할당하여 
-	// 마우스 왼쪽 버튼을 눌렀을 때
-	// gluLookAt의 파라미터 값을 변경할 수 있게 
+	glutPostRedisplay();
 }
 
 void MyReshape(int w, int h) {
@@ -136,6 +168,7 @@ int main(int argc, char *argv[]) {
 	InitLight(); 
 	glutDisplayFunc(MyDisplay);
 	glutKeyboardFunc(MyKeyboard);
+	glutMouseFunc(MyMouseClick);
 	glutMotionFunc(MyMouseMove);
 	glutReshapeFunc(MyReshape);
 	
