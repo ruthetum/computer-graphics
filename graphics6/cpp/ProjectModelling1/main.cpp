@@ -7,12 +7,242 @@
 // 추가 
 
 #include <GL/glut.h>
+#include <stdio.h>
 #include <math.h>
 #define PI 3.14159265358972
+#define LIST_SIZE 7
 
-float getRadian(float num) {
-	return num * (PI / 180);
+// 마우스 움직임에 따른 시점 변경용 전역변수 
+GLint clickedX, clickedY;
+GLint ViewX = 0, ViewY = 0;
+
+// 키보드 콜백을 통한 모델 렌더링 종류 결정 
+int FlatShaded = 1, WireFramed = 0; 
+
+// 모델 좌표
+GLfloat etX = 0.0, etY = 0.0, etZ = -1.0;
+
+// 탁자 상판 
+GLfloat upperTableVertices[8][3] = {
+	{ -0.5, -0.1, 0.5},
+	{ -0.5, 0.0, 0.5},
+	{ 0.5, 0.0, 0.5}, 
+	{ 0.5, -0.1, 0.5}, 
+	{ -0.5, -0.1, -0.5}, 
+	{ -0.5, 0.0, -0.5}, 
+	{ 0.5, 0.0, -0.5},
+	{ 0.5, -0.1, -0.5}
+};
+// 탁자 다리 
+GLfloat LFLegVertices[8][3] = {
+	{ -0.5, -0.4, 0.5},
+	{ -0.5, -0.1, 0.5},
+	{ -0.4, -0.1, 0.5}, 
+	{ -0.4, -0.4, 0.5}, 
+	{ -0.5, -0.4, 0.4},
+	{ -0.5, -0.1, 0.4},
+	{ -0.4, -0.1, 0.4}, 
+	{ -0.4, -0.4, 0.4}
+};
+GLfloat RFLegVertices[8][3] = {
+	{ 0.4, -0.4, 0.5},
+	{ 0.4, -0.1, 0.5},
+	{ 0.5, -0.1, 0.5}, 
+	{ 0.5, -0.4, 0.5}, 
+	{ 0.4, -0.4, 0.4},
+	{ 0.4, -0.1, 0.4},
+	{ 0.5, -0.1, 0.4}, 
+	{ 0.5, -0.4, 0.4}
+};
+GLfloat LBLegVertices[8][3] = {
+	{ -0.5, -0.4, -0.4},
+	{ -0.5, -0.1, -0.4},
+	{ -0.4, -0.1, -0.4}, 
+	{ -0.4, -0.4, -0.4}, 
+	{ -0.5, -0.4, -0.5},
+	{ -0.5, -0.1, -0.5},
+	{ -0.4, -0.1, -0.5}, 
+	{ -0.4, -0.4, -0.5}
+};
+GLfloat RBLegVertices[8][3] = {
+	{ 0.5, -0.4, -0.4},
+	{ 0.5, -0.1, -0.4},
+	{ 0.4, -0.1, -0.4}, 
+	{ 0.4, -0.4, -0.4}, 
+	{ 0.5, -0.4, -0.5},
+	{ 0.5, -0.1, -0.5},
+	{ 0.4, -0.1, -0.5}, 
+	{ 0.4, -0.4, -0.5}
+};
+
+// 사탕 막대
+GLfloat CandyStick[8][3] = {
+	{ -0.41, 0.0, -0.39},
+	{ -0.41, 0.52, -0.39},
+	{ -0.39, 0.52, -0.39}, 
+	{ -0.39, 0.0, -0.39}, 
+	{ -0.41, 0.0, -0.41},
+	{ -0.41, 0.52, -0.41},
+	{ -0.39, 0.52, -0.41}, 
+	{ -0.39, 0.0, -0.41}
+};
+
+// color 리스트 
+GLfloat MyColors[8][3] = {
+	{0.1, 0.1, 0.1}, 
+	{0.1, 0.1, 0.1},
+	{0.1, 0.1, 0.1}, 
+	{0.1, 0.1, 0.1}, 
+	{0.1, 0.1, 0.1}, 
+	{0.1, 0.1, 0.1}, 
+	{0.1, 0.1, 0.1},  
+	{0.1, 0.1, 0.1}
+};
+// 큐브 정점(6면) 정점 순서 리스트
+GLubyte MyVertexList[24] = {
+	0, 3, 2, 1,
+	2, 3, 7, 6,
+	0, 4, 7, 3,
+	1, 2, 6, 5,
+	4, 5, 6, 7,
+	0, 1, 5, 4
+};
+
+GLuint pig;
+void loadObj(char *fname) {
+	FILE *fp;
+	int read;
+	GLfloat x, y, z;
+	char ch;
+	pig = glGenLists(1);
+	fp = fopen(fname, "r");
+	if (!fp)
+		exit(1);
+		
+	glPointSize(2.0);
+	glNewList(pig, GL_COMPILE);
+	glPushMatrix();
+	
+	if (FlatShaded) {
+		glBegin(GL_POLYGON);
+	} else if (WireFramed) {
+		glBegin(GL_LINE_STRIP);	
+	}
+	while(!(feof(fp))) {
+		read = fscanf(fp, "%c %f %f %f", &ch, &x, &y, &z);
+		if (read==4 && ch=='v') {
+			glVertex3f(x,y,z);
+		}
+	}
+	glEnd();
+	glPopMatrix();
+	glEndList();
+	fclose(fp);
 }
+void drawPig() {
+	glPushMatrix();
+	glColor3f(0.7, 0.7, 0.7);
+	glTranslatef(0.2, 0.0, -0.1);
+	glScalef(0.2, 0.2, 0.2);
+	glCallList(pig);
+	glPopMatrix();
+}
+
+GLuint myList;
+void MyDisplayList() {
+	
+	myList = glGenLists(LIST_SIZE);
+	
+	glNewList(myList, GL_COMPILE);
+		glFrontFace(GL_CCW);
+		glEnable(GL_CULL_FACE);
+		glEnableClientState(GL_COLOR_ARRAY);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glColorPointer(3, GL_FLOAT, 0, MyColors);
+		glVertexPointer(3, GL_FLOAT, 0, upperTableVertices);
+		for (GLint i=0; i<6; i++) {
+			glDrawElements(GL_POLYGON, 4, GL_UNSIGNED_BYTE, &MyVertexList[4*i]);
+		}
+	glEndList();
+	
+	glNewList(myList+1, GL_COMPILE);
+		glFrontFace(GL_CCW);
+		glEnable(GL_CULL_FACE);
+		glEnableClientState(GL_COLOR_ARRAY);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glColorPointer(3, GL_FLOAT, 0, MyColors);
+		glVertexPointer(3, GL_FLOAT, 0, LFLegVertices);
+		for (GLint i=0; i<6; i++) {
+			glDrawElements(GL_POLYGON, 4, GL_UNSIGNED_BYTE, &MyVertexList[4*i]);
+		}
+	glEndList();
+	
+	glNewList(myList+2, GL_COMPILE);
+		glFrontFace(GL_CCW);
+		glEnable(GL_CULL_FACE);
+		glEnableClientState(GL_COLOR_ARRAY);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glColorPointer(3, GL_FLOAT, 0, MyColors);
+		glVertexPointer(3, GL_FLOAT, 0, RFLegVertices);
+		for (GLint i=0; i<6; i++) {
+			glDrawElements(GL_POLYGON, 4, GL_UNSIGNED_BYTE, &MyVertexList[4*i]);
+		}
+	glEndList();
+	
+	glNewList(myList+3, GL_COMPILE);
+		glFrontFace(GL_CCW);
+		glEnable(GL_CULL_FACE);
+		glEnableClientState(GL_COLOR_ARRAY);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glColorPointer(3, GL_FLOAT, 0, MyColors);
+		glVertexPointer(3, GL_FLOAT, 0, LBLegVertices);
+		for (GLint i=0; i<6; i++) {
+			glDrawElements(GL_POLYGON, 4, GL_UNSIGNED_BYTE, &MyVertexList[4*i]);
+		}
+	glEndList();
+	
+	glNewList(myList+4, GL_COMPILE);
+		glFrontFace(GL_CCW);
+		glEnable(GL_CULL_FACE);
+		glEnableClientState(GL_COLOR_ARRAY);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glColorPointer(3, GL_FLOAT, 0, MyColors);
+		glVertexPointer(3, GL_FLOAT, 0, RBLegVertices);
+		for (GLint i=0; i<6; i++) {
+			glDrawElements(GL_POLYGON, 4, GL_UNSIGNED_BYTE, &MyVertexList[4*i]);
+		}
+	glEndList();
+	
+	glNewList(myList+5, GL_COMPILE);
+		glTranslatef(-0.3, 0.06, 0.2);
+		if (FlatShaded) {
+			glutSolidTeapot(0.1);
+		}
+		if (WireFramed){
+			glutWireTeapot(0.1);
+		}
+	glEndList();
+	
+	glNewList(myList+6, GL_COMPILE);
+		glTranslatef(-0.1, 0.64, -0.6);
+		if (FlatShaded) {
+			glutSolidSphere(0.2, 20, 30);
+		}
+		if (WireFramed){
+			glutWireSphere(0.2, 20, 30);
+		}
+		glTranslatef(0.4, -0.7, 0.4);
+		glFrontFace(GL_CCW);
+		glEnable(GL_CULL_FACE);
+		glEnableClientState(GL_COLOR_ARRAY);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glColorPointer(3, GL_FLOAT, 0, MyColors);
+		glVertexPointer(3, GL_FLOAT, 0, CandyStick);
+		for (GLint i=0; i<6; i++) {
+			glDrawElements(GL_POLYGON, 4, GL_UNSIGNED_BYTE, &MyVertexList[4*i]);
+		}
+	glEndList();
+} 
 
 // 조명 설정 
 void InitLight() {
@@ -42,20 +272,10 @@ void InitLight() {
 	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
 }
 
-// 마우스 움직임에 따른 시점 변경용 전역변수 
-GLint clickedX, clickedY;
-GLint ViewX = 0, ViewY = 0;
-
-// flatshade와 wireframe 토글링을 위한 전역변수
-int FlatShaded = 0, WireFramed = 0; 
-
-// 마우스 클릭 확인용
-int mouseClicked = 0; 
-
-GLfloat etX = 0.0, etY = 0.0, etZ = -1.0;
-
-float RotateX = 0.0, Rad, deltaX, deltaXRotate;
-float RotateY = 0.0, deltaY, deltaYRotate;
+// 회전용 radian 구하기 함수 
+float getRadian(float num) {
+	return num * (PI / 180);
+}
 
 void MyDisplay() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -71,18 +291,12 @@ void MyDisplay() {
 		etX, etY, etZ,
 		0.0, 1.0, 0.0
 	);
-	// 마우스의 움직에 따라 시점을 변화시키려면
-	// Mymousemove 에서 입력되는 변화량을 참고하여
-	// gluLookat 파라미터를 변경 : https://huiyu.tistory.com/entry/gluLookAt%ED%95%A8%EC%88%98
 	
-	// 탁자 그리기 + 탁자 위에 주전자 오브젝트 3개 이상 탁자에 그리기
-	// 하나는 제공하는 모델, 두번째는 구글링해서 만들어진 모델, 세번째는 내가 직접 만들기
-	// 이미 모델링 좌표 데이터를 import 하여 사용 가능 
-	
-	
-	glutSolidTeapot(0.2);
-	
-	glFlush();
+	for (int i=0;i<LIST_SIZE;i++) {
+		glCallList(myList+i);
+	}
+	drawPig();
+	glutSwapBuffers();
 }
 
 // 키보드 콜백함수
@@ -97,11 +311,13 @@ void MyKeyboard(unsigned char KeyPressed, int x, int y) {
 		case 's':
 		case 'S':
 			if (FlatShaded) {
-				FlatShaded = 0;
-				glShadeModel(GL_SMOOTH); // 보이는 폴리곤을 따라서 정점색을 채움 
+				glShadeModel(GL_SMOOTH); // 보이는 폴리곤을 따라서 정점색을 채움
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			} else {
 				FlatShaded = 1;
+				WireFramed = 0;
 				glShadeModel(GL_FLAT);	// 처음으로 지정된 색이 채워지는 색으로 결정
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			}
 			glutPostRedisplay();
 			break;
@@ -109,11 +325,13 @@ void MyKeyboard(unsigned char KeyPressed, int x, int y) {
 		case 'w':
 		case 'W':
 			if (WireFramed) {
-				WireFramed = 0;
-				glShadeModel(GL_SMOOTH); // 보이는 폴리곤을 따라서 정점색을 채움 
+				glShadeModel(GL_SMOOTH); // 보이는 폴리곤을 따라서 정점색을 채움
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			} else {
 				WireFramed = 1;
+				FlatShaded = 0;
 				glShadeModel(GL_FLAT);	// 처음으로 지정된 색이 채워지는 색으로 결정
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			}
 			glutPostRedisplay();
 			break;
@@ -141,16 +359,17 @@ void MyMouseMove(GLint x, GLint y) {
 	ViewX = x;
 	ViewY = y;
 	
-	deltaX = (float)(ViewX - clickedX);
-	deltaXRotate = deltaX / 500.0;
-	RotateX = deltaXRotate * 180.0;
-	Rad = getRadian(RotateX);
+	float deltaX = (float)(ViewX - clickedX);
+	float deltaXRotate = deltaX / 500.0;
+	float RotateX = deltaXRotate * 360.0;
+	float Rad = getRadian(RotateX);
 	etX = (GLfloat) (sin(Rad));
 	etZ = (GLfloat) (-1 * cos(Rad));
 	
-	deltaY = (float)(clickedY - ViewY);
-	deltaYRotate = deltaY / 500.0;
-	etY = deltaYRotate * 2;
+	float deltaY = (float)(clickedY - ViewY);
+	float deltaYRotate = deltaY / 500.0;
+	etY = deltaYRotate * 3;
+	
 	glutPostRedisplay();
 }
 
@@ -163,19 +382,20 @@ void MyReshape(int w, int h) {
 
 int main(int argc, char *argv[]) {
 	glutInit( &argc, argv );
-	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	glutInitWindowSize(500, 500);
 	glutInitWindowPosition(0,0);
   	glutCreateWindow("OpenGL Project I by 2016310285 김희동");
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 	
-	
-	InitLight(); 
+	InitLight();
 	glutDisplayFunc(MyDisplay);
 	glutKeyboardFunc(MyKeyboard);
 	glutMouseFunc(MyMouseClick);
 	glutMotionFunc(MyMouseMove);
 	glutReshapeFunc(MyReshape);
+	MyDisplayList();
+	loadObj("pig.obj");
 	
   	glutMainLoop();
   	return 0;
