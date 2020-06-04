@@ -394,16 +394,15 @@ void Jump() {
 					 기본적인 로봇의 움직임의 가속도는 sin() 함수를 통해 표현하였다
 					 또한 관절의 제한범위를 생각하여 abs() 함수를 통해 관절의 움직임을 제한하였다.
 					 */
-	L_Arm_x = (-40) + sin(time2) * 60;//왼쪽 어깨의 각도시작은 -40상태에서 sin()함수를 사용하여 주기적인 움직임 설정
-	R_Arm_x = (-80) - L_Arm_x;       //우측 어깨의 각도시작은 -80상태에서 왼쪽어깨 움직임의 반대로 설정
-	R_Arm_y = -abs(long(cos(time2)) * 10);  //우측팔뚝 각도조절(팔을 뻗는 움직임표현을위하여 어깨의 sin()함수와 반대인 cos()함수 사용)
-	L_Arm_y = -abs(long(-cos(time2)) * 10); //좌측팔뚝 각도조절(팔을 뻗는 움직임표현을위하여 어깨의 sin()함수와 반대인 cos()함수 사용)
-
-	R_Leg_y = abs(long(-sin(time)) * 30 - 30);  //우측종아리 각도조절(abs절대값을 줌으로써 종아리가 앞으로 꺾이지 않는 한계점을 설정)
-	L_Leg_y = abs(long(sin(time)) * 30 - 30);   //좌측종아리 각도조절(abs절대값을 줌으로써 종아리가 앞으로 꺾이지 않는 한계점을 설정)
-	R_Leg_x = sin(time) * 60;          //우측다리는 60도 각도까지 움직이되 sin()함수를 사용하여 주기적인 움직임 설정
-	L_Leg_x = -R_Leg_x;              //좌측다리는 우측다리반대로 60도 각도까지 움직이되 sin()함수를 사용하여 주기적인 움직임 설정
-
+	L_Arm_x = (180) + sin(time2) * 10;
+	R_Arm_x = (-0) - L_Arm_x;
+	R_Arm_y = -abs(long(cos(time2)) * 80);
+	L_Arm_y = -abs(long(-cos(time2)) * 80);
+	
+	R_Leg_y = abs(long(-sin(time)) * 30 - 30);
+	L_Leg_y = abs(long(sin(time)) * 30 - 30);
+	R_Leg_x = 15 + sin(time) * 60;
+	L_Leg_x = 60 + sin(time) * 20;
 									 ////////////////display////////////////
 
 	cyl = gluNewQuadric(); //실린더 객체 생성
@@ -416,7 +415,8 @@ void Jump() {
 					 /*
 					 로봇이 달리면서 앞,뒤로 뒤뚱거리고 몸이 틀어지는 것을 표현
 					 */
-	glRotatef(-230.0, 0, 1, 0);
+	glRotatef(-230.0-(time * 45), 0, 1, 0);
+	glRotatef(sin(time) * 10, 0, 0, 1);
 	glRotatef(abs(long(sin(time)) * 16), 1, 0, 0);//x축으로 16도 까지 각도틀어짐(abs절대값을 줌으로써 몸체가 뒤로 꺾이지 않는 한계점을 설정)
 	glRotatef(sin(time) * 16, 0, 1, 0); //y축으로 16도 까지 각도틀어짐, sin()함수를 사용하여 주기적인 움직임 설정
 
@@ -427,9 +427,9 @@ void Jump() {
 	i = abs(long(sin(time)*0.08)); //i변수값 설정
 	glPushMatrix();// 처음 저장 좌표 다시 저장
 	glTranslatef(0.0, i, 0); //변수 i만큼 로봇의 몸체가 Y축기준으로 움직임.
-
 	glTranslatef(0.0, 0.5, 0.0);//최초 로봇의 위치 
 	DrawAndroid();
+	
 	glutSwapBuffers();
 	  
 } 
@@ -762,10 +762,10 @@ void MyMouseMove(GLint x, GLint y) {
 	ViewX = x;
 	ViewY = y;
 	
-//	GLfloat deltaX = ViewX - clickedX;
+	GLfloat deltaX = ViewX - clickedX;
 //	GLfloat deltaY = clickedY - ViewY;
-//	GLfloat deltaXRotate = deltaX / 800 * 90;//스크린 가로 방향 끝에서 끝으로  드래그 시 90도 회전 
-//	GLfloat delateYRotate = deltaY / 800 * 90;//스크린 세로 방향 끝에서 끝으로  드래그 시 90도 회전
+	rotateLR = deltaX / 800 * 360;//스크린 가로 방향 끝에서 끝으로  드래그 시 360도 회전 
+//	GLfloat rotateUD = deltaY / 800 * 180;//스크린 세로 방향 끝에서 끝으로  드래그 시 90도 회전
 	
 	glutPostRedisplay();
 }
@@ -805,8 +805,6 @@ void MyDisplay() {
 		ex();
 		glPopMatrix();
 	}
-	
-	
 }
 /*
 타이머 함수
